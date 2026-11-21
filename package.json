@@ -1,0 +1,15 @@
+{
+  "name": "barifollow",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "BariFollow storefront, wallet, order engine and admin.",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.js",
+    "dev": "NODE_ENV=development node --env-file-if-exists=.env --watch server.js",
+    "test": "node tests/e2e.test.js"
+  }
+}

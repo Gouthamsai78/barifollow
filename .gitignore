@@ -1,3 +1,20 @@
 .DS_Store
 .opencode/
 WhatsApp Image*.jpeg
+
+# Local runtime
+node_modules/
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Editor / OS
+.vscode/
+.idea/
+*.log

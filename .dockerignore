@@ -1,0 +1,16 @@
+node_modules
+data
+.git
+.gitignore
+.env
+.env.*
+.opencode
+tests
+.vscode
+.idea
+*.log
+*.db
+*.db-wal
+*.db-shm
+WhatsApp Image*.jpeg
+README.md

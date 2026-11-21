@@ -5,7 +5,7 @@
      digits only, no + or spaces). Everything on the page uses it.
    ========================================================================== */
 
-const WHATSAPP_NUMBER = "919000000000"; // ← REPLACE with your real number
+const WHATSAPP_NUMBER = "917877311536";
 
 const MESSAGES = {
   general: "Hi BariFollow — I'd like to grow my Instagram. Can you share the details?",
@@ -34,6 +34,29 @@ document.querySelectorAll("[data-wa]").forEach((el) => {
   el.setAttribute("target", "_blank");
   el.setAttribute("rel", "noopener noreferrer");
 });
+
+/* ── store links ────────────────────────────────────────────────────────── */
+/* When the landing page is served by the store backend, /store/config.js
+   defines window.BF_STORE_BASE. On static hosting the WhatsApp links above
+   stay as the fallback. */
+
+const STORE_BASE = String(window.BF_STORE_BASE || "").replace(/\/+$/, "");
+
+if (STORE_BASE) {
+  document.querySelectorAll("[data-store]").forEach((el) => {
+    const key = el.getAttribute("data-store");
+    const href =
+      key === "home"
+        ? STORE_BASE
+        : `${STORE_BASE}/checkout?package=${encodeURIComponent(key)}`;
+
+    el.setAttribute("href", href);
+    el.removeAttribute("target");
+    el.removeAttribute("rel");
+  });
+
+  document.documentElement.classList.add("has-store");
+}
 
 /* ── sticky nav + scroll progress ───────────────────────────────────────── */
 
