@@ -1,190 +1,124 @@
 # BariFollow
 
-Instagram growth storefront: a static marketing site, a wallet-based store, automatic
-order fulfilment through SMM panels, manual UPI top-ups verified by an admin, and a
-finance-aware admin dashboard.
+Instagram growth storefront — a landing page and a package store, built as plain
+**HTML, CSS and JavaScript** and deployed on **GitHub Pages**. No build step, no framework,
+no backend required.
 
-Two deployable pieces live in this one repo:
-
-| Piece | What it is | Where it runs |
+| Piece | Files | URL |
 | --- | --- | --- |
-| Landing page | `index.html`, `styles.css`, `script.js`, `assets/` | GitHub Pages (static) or the store server |
-| Store + admin | Node 24 server, `node:sqlite`, no runtime dependencies | Railway, Fly, a VPS — anything that runs a container |
+| Landing page | `index.html`, `styles.css`, `script.js`, `assets/` | `/` |
+| Store + checkout | `store/index.html`, `store/store.css`, `store/store.js` | `/store/` |
 
-When the landing page is served by the store server, `/store/config.js` upgrades every
-"Order" button and the "Store" nav link to the real store checkout. On GitHub Pages that
-script does not exist, so the same buttons fall back to the WhatsApp number in
-`script.js`.
+Every package CTA on the landing page deep-links to the store:
+`store/?package=followers-5k`. The store opens that package's checkout, takes the
+customer's public Instagram username, and hands the order to WhatsApp with the package,
+price and username already filled in. Payment (UPI) is confirmed in the chat.
 
-## Stack
+There is also an optional Node 24 backend in `src/` for a wallet/order engine with UPI
+top-ups and an admin dashboard. It is not used by GitHub Pages; see
+[Optional backend](#optional-backend) at the end.
 
-- **Node 24** — `node:sqlite` is built in, so there is no `npm install` and no native build.
-- **Plain `node:http`** router with server-rendered HTML. No framework, no bundler.
-- **SQLite** in WAL mode. Money is stored as integer **paise**; floats never touch a balance.
-- Sessions are random tokens stored hashed; CSRF is double-submit (`bf_csrf` cookie +
-  `_csrf` field or `x-csrf-token` header).
-- Provider API keys are encrypted at rest with AES-256-GCM using `APP_SECRET`.
+## Deploy on GitHub Pages
 
-## Run it locally
+The repository is already set up for Pages: deploy from branch `main`, folder `/ (root)`.
 
-```bash
-cp .env.example .env      # edit values
-npm start                 # http://localhost:3000
-```
+1. Push `index.html`, `styles.css`, `script.js`, `assets/`, `store/` and `public/`.
+2. In **Settings → Pages**, set **Source** to *Deploy from a branch*, branch `main`,
+   folder `/ (root)`.
+3. The site is served at `https://<user>.github.io/<repo>/`:
+   - landing: `https://<user>.github.io/<repo>/`
+   - store: `https://<user>.github.io/<repo>/store/`
 
-Development defaults (when `NODE_ENV` is not `production`):
+All store URLs are relative, so the same files work at a domain root or under a project
+path. To publish elsewhere, copy the whole folder to any static host.
 
-- A mock provider is seeded so orders complete without real credentials.
-- An admin is created as `admin@barifollow.local` / `admin12345`.
-
-Both are refused in production: the server will not boot without `ADMIN_EMAIL` /
-`ADMIN_PASSWORD`, and the mock provider is only seeded when `SEED_MOCK=1`.
+### Test the static build locally
 
 ```bash
-npm test                  # end-to-end suite against a throwaway database
+python3 -m http.server 4173
+# landing → http://localhost:4173/
+# store   → http://localhost:4173/store/
 ```
 
-## How the money works
+## The store
 
-1. **Top-up request.** The customer pays the UPI ID shown on `/store/account`, then
-   submits the amount and the UTR. The request is stored as `pending`; no balance moves.
-2. **Admin approval.** In **Admin → Top-ups**, after matching the UTR against the bank/UPI
-   statement, the admin approves. A `topup` ledger entry credits the wallet. Rejection
-   changes nothing in the ledger.
-3. **Order.** Checkout debits the wallet in the same transaction that creates the order.
-   There is no way to place an order without the balance.
-4. **Fulfilment.**
-   - Auto packages are dispatched to the selected provider immediately. Failed dispatch
-     (no provider, bad key, network error, provider rejection) refunds the full price to
-     the wallet automatically.
-   - Blue tick is `manual`: the amount is debited, the order sits in `manual_review`, and
-     an admin marks it `completed` when the work is done. Meta makes the final call; no
-     approval is promised anywhere in the UI.
-5. **Provider sync.** Open orders are polled every `SYNC_INTERVAL_MS` (default 2 min). A
-   provider `Cancel`/`Refund` status triggers an automatic wallet refund. Admin can also
-   sync, complete, or refund any order by hand. Double refunds are refused at the
-   transaction level.
+- Packages and prices live in one array at the top of `store/store.js`; the cards are
+  rendered from it.
+- `?package=<slug>` opens checkout directly — the landing page uses this for every price
+  row and the blue tick card.
+- The username is validated as an Instagram handle before anything opens.
+- **Continue on WhatsApp** opens `wa.me/917877311536` with a prefilled message containing
+  the package, price and `@username`. The customer sends it; you reply with the UPI ID and
+  confirm the amount.
+- If JavaScript is unavailable, every card still has a direct prefilled WhatsApp link.
 
-Every movement is appended to `wallet_txns`, so the balance is always
-`SUM(delta_paise)` for that user — never a mutable column. Admin liability is the sum of
-positive customer balances.
+Current packages: 5K ₹180 · 10K ₹280 · 20K ₹380 · 50K ₹580 · 100K ₹780 · 500K ₹1,100 ·
+blue tick ₹669 (manual review; Meta decides approval).
 
-## Environment
+## Editing
 
-| Variable | Required | Notes |
-| --- | --- | --- |
-| `PORT` | no | Default `3000`. |
-| `NODE_ENV` | prod | `production` enables Secure cookies, HSTS, and the boot checks. |
-| `APP_SECRET` | prod | 32+ random chars. Encrypts provider API keys. Changing it invalidates stored keys. `openssl rand -hex 32` |
-| `DATABASE_PATH` | no | Default `./data/barifollow.db`. Put this on a persistent volume. |
-| `BASE_URL` | no | Public origin, used in copy and links. |
-| `TRUST_PROXY` | behind proxy | Set `1` on Railway/nginx/Caddy so `x-forwarded-for` is used for rate limits. |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | prod (first boot) | Creates the first admin. Password 8+ chars. |
-| `ADMIN_NAME` | no | Display name for that admin. |
-| `UPI_ID` / `UPI_NAME` | yes for top-ups | Shown on the account page and encoded into the `upi://` deep link. |
-| `SUPPORT_WHATSAPP` | no | Digits only, default `917877311536`. |
-| `AUTO_SYNC` | no | `1` (default) runs the poll loop; `0` disables it. |
-| `SYNC_INTERVAL_MS` | no | Default `120000`, floor `15000`. |
-| `SEED_MOCK` | no | `1` seeds a mock provider (non-production only). Never set in production. |
-| `MOCK_COMPLETE_SECONDS` | no | How long the mock takes to "deliver" (default 20). |
+| Change | Where |
+| --- | --- |
+| WhatsApp number | `WHATSAPP_NUMBER` in `script.js` and `store/store.js` |
+| Prices, package names, taglines | `PACKAGES` in `store/store.js` |
+| Landing price rows | `index.html` (`.board__row` blocks) and `style` copy |
+| Store copy / steps | `store/index.html` |
+| Design tokens | `styles.css` (landing) and `public/store.css` (store) |
+| Proof images | `assets/` |
 
-## Provider setup
+The landing's `[data-store]` links are upgraded by `script.js`: by default they point at
+`store/`; if the optional backend serves the page, `/store/config.js` sets
+`window.BF_STORE_BASE` and they point at the server checkout instead.
 
-The adapter speaks the standard SMM-panel API:
+## Browser support
 
-```
-POST {api_url}   application/x-www-form-urlencoded
-key=<api key>&action=add&service=<service id>&link=<profile url>&quantity=<n>
-key=<api key>&action=status&order=<provider order id>
-key=<api key>&action=balance
-```
+Chromium, Firefox and Safari (current versions). The store needs JavaScript only for the
+package cards and checkout panel; the WhatsApp fallbacks work without it. Reduced-motion
+and keyboard focus states are respected.
 
-Setup order:
+## Optional backend
 
-1. **Admin → Providers** → add the panel name, `https://…/api/v2` URL, API key, priority.
-   Lower priority wins when a package has no explicit mapping.
-2. **Test** the provider to check the key and read the panel balance.
-3. **Admin → Packages** → for each follower package, choose the provider and paste the
-   panel's **service ID**, then Save. Packages without a service ID fail closed and refund
-   the customer instead of guessing.
-4. Leave `active` on for packages you want to sell.
+`server.js`, `src/`, `public/` and `tests/` contain a dependency-free Node 24 + SQLite
+wallet/order engine: accounts, UPI top-up requests with admin approval, wallet ledger,
+provider dispatch, auto-refunds, manual blue-tick fulfilment, and an admin dashboard.
 
-The mock provider is useful for demos and local development; production orders will fail
-and refund until a real provider is mapped.
-
-## Deployment
-
-### Railway
-
-`railway.json` + `Dockerfile` are included. Create a project from the repo, then:
-
-1. Add a **volume** mounted at `/app/data` (SQLite must survive deploys).
-2. Set the environment variables above — at minimum `NODE_ENV=production`,
-   `APP_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `UPI_ID`, `UPI_NAME`, `TRUST_PROXY=1`.
-3. Deploy. The health check is `/healthz`.
-
-The container runs as the unprivileged `node` user.
-
-### VPS
+Run it:
 
 ```bash
-docker build -t barifollow .
-docker run -d --name barifollow \
-  -p 127.0.0.1:3000:3000 \
-  -v /srv/barifollow/data:/app/data \
-  --env-file .env \
-  --restart unless-stopped \
-  barifollow
+cp .env.example .env
+npm start        # http://localhost:3000  (store at /store, admin at /store/admin)
+npm test         # 16 end-to-end checks
 ```
 
-Put Caddy or nginx in front for TLS. Example Caddyfile:
+It ships with a `Dockerfile` and `railway.json`. This backend is **not** deployable on
+GitHub Pages — Pages serves static files only. It is here for when you want real accounts,
+wallet balances and an operations dashboard on Railway or a VPS. Until then, the static
+store plus WhatsApp is the live product.
 
-```
-barifollow.example.com {
-  reverse_proxy 127.0.0.1:3000
-}
-```
+Backend notes:
 
-Set `TRUST_PROXY=1` when a reverse proxy terminates TLS.
-
-### Landing page
-
-The static landing deploys to GitHub Pages from `main`. It works standalone: every CTA
-opens WhatsApp at `917877311536`. When the same page is served by the store server, the
-injected `/store/config.js` rewrites CTAs to `/store/checkout?package=…` and the **Store**
-link to `/store`. No duplicate markup, no second landing page.
+- Money is stored as integer paise; balances are derived from an append-only ledger.
+- Top-ups credit only after an admin matches the UTR against the bank statement.
+- Orders debit the wallet in the same transaction; failed dispatch refunds automatically.
+- Provider keys are encrypted at rest with AES-256-GCM using `APP_SECRET`.
+- Production boot requires `APP_SECRET` (32+ chars) and an admin account.
+- Deployment: Railway (`railway.json`, volume at `/app/data`) or `docker run` on a VPS.
+  See `.env.example` for the full environment contract.
 
 ## Layout
 
 ```
-index.html, styles.css, script.js   landing page (also served by the app)
-public/store.css, store.js          storefront + admin styles and small interactions
-public/admin.js                     admin dashboard (vanilla JS)
-src/app.js                          HTTP server, security headers, static, routing
-src/db.js                           schema, seeds, transactions, audit log
-src/auth.js                         scrypt passwords, sessions, registration/login
-src/wallet.js                       ledger, top-ups, approval, liability
-src/orders.js                       checkout, dispatch, sync, refunds, completion
-src/providers.js                    SMM + mock adapters, status mapping, encryption use
-src/adminApi.js                     admin JSON APIs
-src/pages.js                        storefront, auth, account, order, admin pages
-server.js                           entry point, sync loop, graceful shutdown
-tests/e2e.test.js                   full flow: register → top-up → order → refund
+index.html, styles.css, script.js   landing page
+store/index.html                    static store + checkout
+store/store.css                     store-only additions
+store/store.js                      packages, checkout, WhatsApp handoff
+public/store.css                    shared store design system
+public/store.js, public/admin.js    optional backend assets
+src/                                optional Node backend
+tests/e2e.test.js                   backend end-to-end suite
+Dockerfile, railway.json            optional backend deployment
 ```
 
-## Security notes
-
-- Passwords: scrypt (N=16384), constant-time verification, dummy hash for unknown emails.
-- Sessions: 32-byte random tokens, SHA-256 stored, HttpOnly `bf_sid`, 30-day expiry,
-  Secure in production.
-- CSRF: every non-GET request requires a matching double-submit token.
-- Rate limits on login, registration, top-ups, checkout, and sync.
-- All SQL is parameterized; HTML passes through `esc()`.
-- CSP, `X-Frame-Options: DENY`, `nosniff`, strict referrer policy, no inline third-party
-  scripts. Google Fonts is the only external origin.
-- Admin actions write to an append-only `audit` table.
-- Raw UPI UTRs are stored because they are needed for reconciliation; they are never shown
-  to other customers.
-
-This is a real payment-adjacent service: keep `APP_SECRET` and the database volume backed
-up, and reconcile top-ups against the actual bank statement before approving.
+BariFollow is an independent service. Not affiliated with, endorsed by, or sponsored by
+Instagram or Meta Platforms, Inc. Results vary by account. Blue tick approval is decided
+by Meta and cannot be guaranteed.

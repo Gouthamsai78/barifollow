@@ -36,27 +36,29 @@ document.querySelectorAll("[data-wa]").forEach((el) => {
 });
 
 /* ── store links ────────────────────────────────────────────────────────── */
-/* When the landing page is served by the store backend, /store/config.js
-   defines window.BF_STORE_BASE. On static hosting the WhatsApp links above
-   stay as the fallback. */
+/* Default target is the static store in ./store (GitHub Pages). When the
+   landing page is served by the optional Node backend, /store/config.js
+   defines window.BF_STORE_BASE and these links point at the server-rendered
+   checkout instead. */
 
-const STORE_BASE = String(window.BF_STORE_BASE || "").replace(/\/+$/, "");
+const BACKEND_STORE = String(window.BF_STORE_BASE || "").replace(/\/+$/, "");
+const STORE_BASE = BACKEND_STORE || "store";
 
-if (STORE_BASE) {
-  document.querySelectorAll("[data-store]").forEach((el) => {
-    const key = el.getAttribute("data-store");
-    const href =
-      key === "home"
-        ? STORE_BASE
-        : `${STORE_BASE}/checkout?package=${encodeURIComponent(key)}`;
+document.querySelectorAll("[data-store]").forEach((el) => {
+  const key = el.getAttribute("data-store");
+  const href =
+    key === "home"
+      ? `${STORE_BASE}/`
+      : BACKEND_STORE
+        ? `${STORE_BASE}/checkout?package=${encodeURIComponent(key)}`
+        : `${STORE_BASE}/?package=${encodeURIComponent(key)}`;
 
-    el.setAttribute("href", href);
-    el.removeAttribute("target");
-    el.removeAttribute("rel");
-  });
+  el.setAttribute("href", href);
+  el.removeAttribute("target");
+  el.removeAttribute("rel");
+});
 
-  document.documentElement.classList.add("has-store");
-}
+document.documentElement.classList.add("has-store");
 
 /* ── sticky nav + scroll progress ───────────────────────────────────────── */
 

@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Store — BariFollow</title>
+<meta name="description" content="BariFollow store — Instagram follower packages from ₹180 and blue tick verification. Choose a package, send your username, pay by UPI on WhatsApp.">
+<meta name="theme-color" content="#0a0a0b">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23d2ff57'/%3E%3Cpath d='M10 22 22 10M22 10h-8M22 10v8' stroke='%230a0a0b' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
+<script>document.documentElement.classList.add("js");</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../public/store.css">
+<link rel="stylesheet" href="store.css">
+</head>
+<body class="store-body">
+
+<header class="topbar">
+  <div class="shell topbar__in">
+    <a class="brand" href="../" aria-label="BariFollow home">
+      <svg class="brand__mark" width="30" height="30" viewBox="0 0 32 32" aria-hidden="true">
+        <rect width="32" height="32" rx="9" fill="#d2ff57"/>
+        <path d="M10 22 22 10M22 10h-8M22 10v8" stroke="#0a0a0b" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+      <span class="brand__word">Bari<span>Follow</span></span>
+    </a>
+
+    <nav class="topnav" aria-label="Store">
+      <a class="is-on" href="./">Store</a>
+      <a href="../#proof">Proof</a>
+      <a href="../#faq">FAQ</a>
+    </nav>
+
+    <div class="topbar__side">
+      <a class="toplink" href="../#packages">Price list</a>
+      <a class="btn btn--lime btn--sm" href="https://wa.me/917877311536?text=Hi%20BariFollow%20%E2%80%94%20I%20need%20help%20with%20an%20order." target="_blank" rel="noopener noreferrer">
+        WhatsApp us
+      </a>
+    </div>
+  </div>
+</header>
+
+<main class="shell page">
+
+  <section class="store-hero">
+    <p class="eyebrow"><span class="dot"></span>Store</p>
+    <h1>Pick a number.<br><em>Pay once.</em></h1>
+    <p class="lede">Same prices as the price list. Choose a package, send your Instagram username,
+    and we confirm the UPI payment on WhatsApp. No passwords, ever.</p>
+    <ul class="micro">
+      <li>Username only</li>
+      <li>UPI payment</li>
+      <li>Delivery starts same day</li>
+      <li>Real person on WhatsApp</li>
+    </ul>
+  </section>
+
+  <section class="checkout-live" id="checkout" hidden aria-labelledby="coName">
+    <p class="eyebrow"><span class="dot"></span>Checkout</p>
+    <div class="checkout-grid">
+      <form class="panel" id="orderForm" novalidate>
+        <div class="co-head">
+          <div>
+            <h2 class="panel__title" id="coName">Package</h2>
+            <p class="muted co-tagline" id="coTagline"></p>
+          </div>
+          <span class="co-price" id="coPrice">₹0</span>
+        </div>
+
+        <label class="field">
+          <span class="field__label">Instagram username</span>
+          <div class="field__prefix">@</div>
+          <input class="input input--prefixed" id="coUsername" name="username"
+                 placeholder="yourhandle" autocomplete="off" autocapitalize="none"
+                 spellcheck="false" maxlength="31" required>
+          <span class="field__hint">Public handle only. We never ask for your password or login.</span>
+        </label>
+
+        <div class="summary">
+          <div><span>Package</span><strong id="coSummaryName">—</strong></div>
+          <div><span>Quantity</span><strong id="coQty">—</strong></div>
+          <div class="summary__total"><span>Price</span><strong id="coTotal">—</strong></div>
+        </div>
+
+        <div class="flash flash--err" id="coError" role="alert" hidden></div>
+
+        <button class="btn btn--lime btn--full" type="submit">Continue on WhatsApp</button>
+        <p class="terms">Payment is arranged on WhatsApp. We reply with the UPI ID and confirm the
+        amount before anything is due. Delivery starts once payment is confirmed. For the blue
+        tick, Meta makes the final call — no service can honestly guarantee approval.</p>
+      </form>
+
+      <aside class="panel panel--soft">
+        <h2 class="panel__title">What happens next</h2>
+        <ol class="steps-mini">
+          <li><span>01</span>Send your username — no password, no login.</li>
+          <li><span>02</span>We reply with the UPI ID and confirm the amount.</li>
+          <li><span>03</span>Pay, then share the UTR or screenshot in the chat.</li>
+          <li><span>04</span>Delivery starts and we track it with you.</li>
+        </ol>
+        <button class="linkline linkbtn" type="button" id="changePackage">Change package</button>
+      </aside>
+    </div>
+  </section>
+
+  <section class="packages-block" id="packages">
+    <div class="block-head">
+      <h2>Packages</h2>
+      <p class="mono" id="pkgCount">7 available</p>
+    </div>
+
+    <div class="pkg-grid" id="packageGrid">
+      <noscript>
+        <p class="flash flash--warn">The store needs JavaScript to show the package cards.
+        Message us on WhatsApp and we'll take your order there.</p>
+      </noscript>
+    </div>
+
+    <p class="fineprint">Blue tick is handled by our team: audit, document kit, submission and
+    follow-up. Meta makes the final decision on every badge — approval cannot be guaranteed.
+    Follower counts can dip after delivery; message us and we'll look at a refill.</p>
+  </section>
+
+  <section class="panel panel--soft store-note">
+    <h2 class="panel__title">Paying safely</h2>
+    <ul class="checks store-note__checks">
+      <li>UPI only — GPay, PhonePe, Paytm or any UPI app</li>
+      <li>The UPI ID is shared by us in the WhatsApp chat before you pay</li>
+      <li>We never ask for your Instagram password, 2FA code or login</li>
+      <li>Keep the payment screenshot until delivery starts</li>
+    </ul>
+    <a class="linkline" href="../#faq">Read the FAQ</a>
+  </section>
+
+</main>
+
+<footer class="sfoot">
+  <div class="shell sfoot__in">
+    <div class="sfoot__brand">
+      <svg class="brand__mark" width="26" height="26" viewBox="0 0 32 32" aria-hidden="true">
+        <rect width="32" height="32" rx="9" fill="#d2ff57"/>
+        <path d="M10 22 22 10M22 10h-8M22 10v8" stroke="#0a0a0b" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+      <p>Grow your Instagram. Quietly.</p>
+    </div>
+    <nav class="sfoot__links" aria-label="Footer">
+      <a href="./">Store</a>
+      <a href="../#packages">Price list</a>
+      <a href="../#proof">Receipts</a>
+      <a href="../#faq">FAQ</a>
+      <a href="https://wa.me/917877311536?text=Hi%20BariFollow%20%E2%80%94%20I%20need%20help%20with%20an%20order." target="_blank" rel="noopener noreferrer">WhatsApp</a>
+    </nav>
+    <p class="sfoot__fine">
+      BariFollow is an independent service. Not affiliated with, endorsed by, or sponsored by
+      Instagram or Meta Platforms, Inc. Payment is arranged directly on WhatsApp and confirmed
+      before delivery. Results vary by account. © <span id="year">2026</span> BariFollow.
+    </p>
+  </div>
+</footer>
+
+<script src="store.js" defer></script>
+</body>
+</html>
